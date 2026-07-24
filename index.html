@@ -64,9 +64,11 @@
     transition: background 0.3s ease, color 0.3s ease;
   }
 
+  html { scroll-behavior: smooth; }
+
   .app {
     width: 100%;
-    max-width: 760px;
+    max-width: 1400px;
   }
 
   /* ---------- Header ---------- */
@@ -75,7 +77,16 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 12px;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
+  }
+
+  .header-sticky {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--color-background);
+    padding: 20px 0 4px;
+    margin: -20px 0 4px;
   }
 
   .brand {
@@ -146,8 +157,13 @@
     border-color: var(--color-primary);
   }
 
-  .tabpanel { display: none; animation: fadein 200ms ease-out; }
-  .tabpanel.active { display: block; }
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    align-items: start;
+    gap: 24px;
+  }
+  .tabpanel { animation: fadein 300ms ease-out; scroll-margin-top: 136px; }
   @keyframes fadein { from { opacity: 0; transform: translateY(4px);} to { opacity: 1; transform: translateY(0);} }
 
   /* ---------- Shared card ---------- */
@@ -532,33 +548,35 @@
 <canvas id="confetti-canvas"></canvas>
 
 <div class="app">
-  <div class="topbar">
-    <div class="brand"><span class="logo">🎉</span><span>Fun Hub</span></div>
-    <div class="controls">
-      <button class="icon-btn" id="soundToggle" data-muted="false" aria-label="Toggle sound">
-        <svg class="icon-loud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>
-        <svg class="icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M23 9l-6 6M17 9l6 6"/></svg>
-      </button>
-      <button class="icon-btn" id="themeToggle" aria-label="Toggle dark mode">
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-      </button>
+  <div class="header-sticky">
+    <div class="topbar">
+      <div class="brand"><span class="logo">🎉</span><span>Fun Hub</span></div>
+      <div class="controls">
+        <button class="icon-btn" id="soundToggle" data-muted="false" aria-label="Toggle sound">
+          <svg class="icon-loud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>
+          <svg class="icon-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M23 9l-6 6M17 9l6 6"/></svg>
+        </button>
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle dark mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        </button>
+      </div>
     </div>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="calc">🧮 Calculator</button>
+      <button class="tab" data-tab="network">🌐 Network</button>
+      <button class="tab" data-tab="ttt">❌ Tic-Tac-Toe</button>
+      <button class="tab" data-tab="snake">🐍 Snake</button>
+      <button class="tab" data-tab="g2048">🔢 2048</button>
+      <button class="tab" data-tab="memory">🧠 Memory</button>
+      <button class="tab" data-tab="rps">✊ RPS</button>
+    </nav>
   </div>
 
-  <nav class="tabs" id="tabs">
-    <button class="tab active" data-tab="calc">🧮 Calculator</button>
-    <button class="tab" data-tab="network">🌐 Network</button>
-    <button class="tab" data-tab="ttt">❌ Tic-Tac-Toe</button>
-    <button class="tab" data-tab="snake">🐍 Snake</button>
-    <button class="tab" data-tab="g2048">🔢 2048</button>
-    <button class="tab" data-tab="memory">🧠 Memory</button>
-    <button class="tab" data-tab="rps">✊ RPS</button>
-  </nav>
-
-  <main>
+  <main class="app-grid">
     <!-- ===================== CALCULATOR ===================== -->
-    <section class="tabpanel active" id="tab-calc">
+    <section class="tabpanel" id="tab-calc">
       <div class="card">
         <div class="card__header">
           <p class="card__title">Calculator</p>
@@ -869,19 +887,34 @@ const Confetti = (() => {
   return { burst, fromCenter };
 })();
 
-/* ---- Tabs ---- */
+/* ---- Quick-jump nav (all apps live on one page now) ---- */
 const tabs = $$('.tab');
 const panels = $$('.tabpanel');
-let activeTab = 'calc';
+let activeTab = null; // which panel keyboard shortcuts (Calculator/Snake/2048) route to
+
 tabs.forEach(tab => {
   tab.addEventListener('click', () => {
-    tabs.forEach(t => t.classList.remove('active'));
-    panels.forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    activeTab = tab.dataset.tab;
-    $('#tab-' + activeTab).classList.add('active');
     Sound.click();
+    $('#tab-' + tab.dataset.tab).scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
+});
+
+// Highlight the nav chip for whichever section is currently in view.
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const id = entry.target.id.replace('tab-', '');
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === id));
+  });
+}, { rootMargin: '-136px 0px -70% 0px', threshold: 0 });
+panels.forEach(p => sectionObserver.observe(p));
+
+// Keyboard shortcuts (digits for Calculator, arrows for Snake/2048) only apply
+// to whichever of those panels the pointer is over or was last interacted with.
+['calc', 'snake', 'g2048'].forEach(id => {
+  const el = $('#tab-' + id);
+  el.addEventListener('mouseenter', () => { activeTab = id; });
+  el.addEventListener('click', () => { activeTab = id; });
 });
 
 /* ============================================================
