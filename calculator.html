@@ -525,6 +525,28 @@
   .net-table th, .net-table td { padding: 7px 8px; text-align: center; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
   .net-table th { font-family: 'Fredoka', sans-serif; opacity: 0.8; }
   .net-card-gap { margin-top: 16px; }
+  .net-ref-toggle-btn {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .net-ref-toggle-btn:focus-visible {
+    outline: 3px solid var(--color-ring);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+  .net-chevron {
+    font-size: 14px;
+    opacity: 0.6;
+    transition: transform 150ms ease-out;
+  }
+  .net-ref-toggle-btn[aria-expanded="true"] .net-chevron { transform: rotate(90deg); }
+  .net-ref-toggle-btn[aria-expanded="true"] { margin-bottom: 14px; }
+  #net-ref-wrap { margin-top: 4px; }
 
   #confetti-canvas {
     position: fixed;
@@ -651,8 +673,11 @@
       </div>
 
       <div class="card net-card-gap">
-        <div class="card__header"><p class="card__title">CIDR Quick Reference</p></div>
-        <div class="net-table-wrap">
+        <button class="net-ref-toggle-btn" id="net-ref-toggle" onclick="Net.toggleRefTable()" aria-expanded="false" aria-controls="net-ref-wrap">
+          <p class="card__title">CIDR Quick Reference</p>
+          <span class="net-chevron">▸</span>
+        </button>
+        <div class="net-table-wrap" id="net-ref-wrap" hidden>
           <table class="net-table" id="net-ref-table"></table>
         </div>
       </div>
@@ -1155,6 +1180,15 @@ const Net = (() => {
       '<tr><th>CIDR</th><th>Subnet Mask</th><th>Usable Hosts</th></tr>' + rows.join('');
   }
 
+  function toggleRefTable() {
+    Sound.click();
+    const wrap = $('#net-ref-wrap');
+    const btn = $('#net-ref-toggle');
+    const expanded = btn.getAttribute('aria-expanded') === 'true';
+    wrap.hidden = expanded;
+    btn.setAttribute('aria-expanded', String(!expanded));
+  }
+
   cidrSlider.addEventListener('input', () => {
     cidrLabel.textContent = '/' + cidrSlider.value;
     calculate();
@@ -1165,7 +1199,7 @@ const Net = (() => {
 
   buildRefTable();
   calculate();
-  return { setMode, calculate, randomize };
+  return { setMode, calculate, randomize, toggleRefTable };
 })();
 
 /* ============================================================
