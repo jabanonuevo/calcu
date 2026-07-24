@@ -7,6 +7,7 @@ A single-page, dependency-free web app: a calculator plus a handful of classic o
 ## Features
 
 - 🧮 **Calculator** — standard arithmetic, keyboard support, and a confetti burst for fun result numbers (42, 69, 100, 420, 1337, 8008, π).
+- 🌐 **Network Tools** — IPv4 subnet calculator: enter an IP with a CIDR prefix or subnet mask to get the network/broadcast address, usable host range, wildcard mask, IP class, public/private/loopback/multicast classification, and binary representation, plus a CIDR-to-subnet-mask quick reference table.
 - ❌ **Tic-Tac-Toe** — 2-player mode, plus Vs Computer Easy (random) and Unbeatable (minimax AI) modes.
 - 🐍 **Snake** — arrow keys / WASD / on-screen d-pad / swipe controls, speeds up as your score grows.
 - 🔢 **2048** — keyboard and swipe controls, win/game-over detection.

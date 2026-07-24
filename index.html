@@ -443,6 +443,70 @@
   .rps-shake { animation: shake 350ms ease-out; }
   @keyframes shake { 0%,100% { transform: translateX(0);} 25% { transform: translateX(-6px);} 75% { transform: translateX(6px);} }
 
+  /* ---------- Network Tools ---------- */
+  .net-field { margin-bottom: 14px; }
+  .net-field label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    opacity: 0.75;
+  }
+  .net-field input[type="text"] {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 3px solid var(--color-border);
+    background: var(--color-muted);
+    color: var(--color-foreground);
+    font-family: 'Fredoka', sans-serif;
+    font-size: 16px;
+    box-shadow: var(--clay-shadow-pressed);
+  }
+  .net-field input[type="range"] {
+    width: 100%;
+    accent-color: var(--color-secondary);
+  }
+  .net-error {
+    color: var(--color-destructive);
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    min-height: 18px;
+    margin: 4px 0;
+  }
+  .net-results {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .net-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    background: var(--color-muted);
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    font-size: 13px;
+  }
+  .net-key { font-weight: 700; opacity: 0.7; white-space: nowrap; }
+  .net-val {
+    font-family: 'Fredoka', sans-serif;
+    font-weight: 600;
+    text-align: right;
+    word-break: break-all;
+  }
+  .net-row.net-highlight { border-color: var(--accent-teal); }
+  .net-table-wrap { overflow-x: auto; margin-top: 4px; }
+  .net-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .net-table th, .net-table td { padding: 7px 8px; text-align: center; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
+  .net-table th { font-family: 'Fredoka', sans-serif; opacity: 0.8; }
+  .net-card-gap { margin-top: 16px; }
+
   #confetti-canvas {
     position: fixed;
     inset: 0;
@@ -484,6 +548,7 @@
 
   <nav class="tabs" id="tabs">
     <button class="tab active" data-tab="calc">🧮 Calculator</button>
+    <button class="tab" data-tab="network">🌐 Network</button>
     <button class="tab" data-tab="ttt">❌ Tic-Tac-Toe</button>
     <button class="tab" data-tab="snake">🐍 Snake</button>
     <button class="tab" data-tab="g2048">🔢 2048</button>
@@ -526,6 +591,48 @@
           <button class="key" onclick="Calc.append('0')">0</button>
           <button class="key" onclick="Calc.append('.')">.</button>
           <button class="key equals" onclick="Calc.calculate()" aria-label="Equals">=</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== NETWORK TOOLS ===================== -->
+    <section class="tabpanel" id="tab-network">
+      <div class="card">
+        <div class="card__header"><p class="card__title">IP Subnet Calculator</p></div>
+
+        <div class="net-field">
+          <label for="net-ip">IP Address</label>
+          <input type="text" id="net-ip" value="192.168.1.10" inputmode="decimal" autocomplete="off" spellcheck="false">
+        </div>
+
+        <div class="pill-row" id="net-mode-row">
+          <button class="pill active" data-mode="cidr" onclick="Net.setMode('cidr')">CIDR</button>
+          <button class="pill" data-mode="mask" onclick="Net.setMode('mask')">Subnet Mask</button>
+        </div>
+
+        <div class="net-field" id="net-cidr-field">
+          <label>Prefix Length <span id="net-cidr-label">/24</span></label>
+          <input type="range" id="net-cidr" min="0" max="32" value="24">
+        </div>
+
+        <div class="net-field" id="net-mask-field" style="display:none;">
+          <label for="net-mask">Subnet Mask</label>
+          <input type="text" id="net-mask" value="255.255.255.0" inputmode="decimal" autocomplete="off" spellcheck="false">
+        </div>
+
+        <div class="net-error" id="net-error"></div>
+        <div class="btn-row">
+          <button class="btn" onclick="Net.calculate()">Calculate</button>
+          <button class="btn ghost" onclick="Net.randomize()">🎲 Random IP</button>
+        </div>
+
+        <div class="net-results" id="net-results"></div>
+      </div>
+
+      <div class="card net-card-gap">
+        <div class="card__header"><p class="card__title">CIDR Quick Reference</p></div>
+        <div class="net-table-wrap">
+          <table class="net-table" id="net-ref-table"></table>
         </div>
       </div>
     </section>
@@ -831,6 +938,198 @@ const Calc = (() => {
     else if (e.key === 'Escape') clear();
   });
   return { append, clear, del, calculate };
+})();
+
+/* ============================================================
+   NETWORK TOOLS — IPv4 subnet calculator
+   ============================================================ */
+const Net = (() => {
+  const ipInput = $('#net-ip');
+  const maskInput = $('#net-mask');
+  const cidrSlider = $('#net-cidr');
+  const cidrLabel = $('#net-cidr-label');
+  const cidrField = $('#net-cidr-field');
+  const maskField = $('#net-mask-field');
+  const errorEl = $('#net-error');
+  const resultsEl = $('#net-results');
+  const modeRow = $('#net-mode-row');
+  let mode = 'cidr';
+
+  function isValidIp(ip) {
+    const parts = ip.trim().split('.');
+    if (parts.length !== 4) return false;
+    return parts.every(p => /^\d{1,3}$/.test(p) && Number(p) >= 0 && Number(p) <= 255);
+  }
+
+  function ipToInt(ip) {
+    return ip.trim().split('.').reduce((acc, oct) => (acc << 8) + Number(oct), 0) >>> 0;
+  }
+
+  function intToIp(int) {
+    return [(int >>> 24) & 255, (int >>> 16) & 255, (int >>> 8) & 255, int & 255].join('.');
+  }
+
+  function cidrToMaskInt(cidr) {
+    return cidr === 0 ? 0 : (0xFFFFFFFF << (32 - cidr)) >>> 0;
+  }
+
+  function maskIntToCidr(maskInt) {
+    let count = 0;
+    for (let i = 31; i >= 0; i--) {
+      if ((maskInt >>> i) & 1) count++; else break;
+    }
+    return count;
+  }
+
+  function isValidMaskInt(maskInt) {
+    let seenZero = false;
+    for (let i = 31; i >= 0; i--) {
+      const bit = (maskInt >>> i) & 1;
+      if (bit === 0) seenZero = true;
+      else if (seenZero) return false;
+    }
+    return true;
+  }
+
+  function toBinaryOctets(int) {
+    return [(int >>> 24) & 255, (int >>> 16) & 255, (int >>> 8) & 255, int & 255]
+      .map(o => o.toString(2).padStart(8, '0')).join('.');
+  }
+
+  function classify(ipInt) {
+    const a = (ipInt >>> 24) & 255;
+    const b = (ipInt >>> 16) & 255;
+    let cls;
+    if (a === 127) cls = 'A (loopback)';
+    else if (a >= 1 && a <= 126) cls = 'A';
+    else if (a >= 128 && a <= 191) cls = 'B';
+    else if (a >= 192 && a <= 223) cls = 'C';
+    else if (a >= 224 && a <= 239) cls = 'D (Multicast)';
+    else cls = 'E (Reserved)';
+
+    let type = 'Public';
+    if (a === 10) type = 'Private';
+    else if (a === 172 && b >= 16 && b <= 31) type = 'Private';
+    else if (a === 192 && b === 168) type = 'Private';
+    else if (a === 169 && b === 254) type = 'Link-Local (APIPA)';
+    else if (a === 127) type = 'Loopback';
+    else if (a >= 224 && a <= 239) type = 'Multicast';
+    else if (a >= 240) type = 'Reserved';
+    return { cls, type };
+  }
+
+  function setMode(m) {
+    mode = m;
+    Sound.click();
+    $$('.pill', modeRow).forEach(p => p.classList.toggle('active', p.dataset.mode === m));
+    cidrField.style.display = m === 'cidr' ? '' : 'none';
+    maskField.style.display = m === 'mask' ? '' : 'none';
+    calculate();
+  }
+
+  function calculate() {
+    errorEl.textContent = '';
+    const ip = ipInput.value.trim();
+    if (!isValidIp(ip)) {
+      resultsEl.innerHTML = '';
+      errorEl.textContent = 'Enter a valid IPv4 address (e.g. 192.168.1.10).';
+      return;
+    }
+    const ipInt = ipToInt(ip);
+
+    let cidr, maskInt;
+    if (mode === 'cidr') {
+      cidr = Number(cidrSlider.value);
+      maskInt = cidrToMaskInt(cidr);
+    } else {
+      const m = maskInput.value.trim();
+      if (!isValidIp(m)) {
+        resultsEl.innerHTML = '';
+        errorEl.textContent = 'Enter a valid subnet mask (e.g. 255.255.255.0).';
+        return;
+      }
+      maskInt = ipToInt(m);
+      if (!isValidMaskInt(maskInt)) {
+        resultsEl.innerHTML = '';
+        errorEl.textContent = 'That subnet mask is not a valid contiguous mask.';
+        return;
+      }
+      cidr = maskIntToCidr(maskInt);
+    }
+
+    const networkInt = (ipInt & maskInt) >>> 0;
+    const wildcardInt = (~maskInt) >>> 0;
+    const broadcastInt = (networkInt | wildcardInt) >>> 0;
+    const totalAddresses = Math.pow(2, 32 - cidr);
+    let usable, firstHost, lastHost;
+    if (cidr === 32) {
+      usable = 1; firstHost = intToIp(ipInt); lastHost = intToIp(ipInt);
+    } else if (cidr === 31) {
+      usable = 2; firstHost = intToIp(networkInt); lastHost = intToIp(broadcastInt);
+    } else {
+      usable = totalAddresses - 2;
+      firstHost = intToIp(networkInt + 1);
+      lastHost = intToIp(broadcastInt - 1);
+    }
+
+    const { cls, type } = classify(ipInt);
+
+    const rows = [
+      ['CIDR Notation', ip + '/' + cidr, true],
+      ['Subnet Mask', intToIp(maskInt)],
+      ['Wildcard Mask', intToIp(wildcardInt)],
+      ['Network Address', intToIp(networkInt), true],
+      ['Broadcast Address', intToIp(broadcastInt), true],
+      ['Total Addresses', totalAddresses.toLocaleString()],
+      ['Usable Hosts', usable.toLocaleString()],
+      ['First Usable Host', firstHost],
+      ['Last Usable Host', lastHost],
+      ['IP Class', cls],
+      ['Address Type', type],
+      ['Binary IP', toBinaryOctets(ipInt)],
+      ['Binary Mask', toBinaryOctets(maskInt)],
+    ];
+
+    resultsEl.innerHTML = rows.map(([k, v, hi]) =>
+      `<div class="net-row${hi ? ' net-highlight' : ''}"><span class="net-key">${k}</span><span class="net-val">${v}</span></div>`
+    ).join('');
+    Sound.pop();
+  }
+
+  function randomize() {
+    const oct = () => Math.floor(Math.random() * 255) + 1;
+    ipInput.value = [oct(), oct(), oct(), oct()].join('.');
+    if (mode === 'cidr') {
+      const presets = [8, 16, 24, 25, 26, 27, 28, 30];
+      const cidr = presets[Math.floor(Math.random() * presets.length)];
+      cidrSlider.value = cidr;
+      cidrLabel.textContent = '/' + cidr;
+    }
+    calculate();
+  }
+
+  function buildRefTable() {
+    const rows = [];
+    for (let c = 32; c >= 16; c--) {
+      const maskInt = cidrToMaskInt(c);
+      const hosts = c === 32 ? 1 : c === 31 ? 2 : Math.pow(2, 32 - c) - 2;
+      rows.push(`<tr><td>/${c}</td><td>${intToIp(maskInt)}</td><td>${hosts.toLocaleString()}</td></tr>`);
+    }
+    $('#net-ref-table').innerHTML =
+      '<tr><th>CIDR</th><th>Subnet Mask</th><th>Usable Hosts</th></tr>' + rows.join('');
+  }
+
+  cidrSlider.addEventListener('input', () => {
+    cidrLabel.textContent = '/' + cidrSlider.value;
+    calculate();
+  });
+  [ipInput, maskInput].forEach(el => {
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') calculate(); });
+  });
+
+  buildRefTable();
+  calculate();
+  return { setMode, calculate, randomize };
 })();
 
 /* ============================================================
